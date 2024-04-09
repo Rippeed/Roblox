@@ -258,7 +258,7 @@ library.themes = {
     }
 }
 
-library.signal = loadstring(game:HttpGetAsync('https://raw.githubusercontent.com/Quenty/NevermoreEngine/main/src/signal/src/Shared/Signal.lua'))();
+library.signal = loadstring(game:HttpGetAsync('https://raw.githubusercontent.com/Rippeed/Roblox/main/signalupd'))();
 
 local blacklistedKeys = {
 	Enum.KeyCode.Unknown,
