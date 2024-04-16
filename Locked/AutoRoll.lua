@@ -3,8 +3,8 @@ getgenv().noYenChange = true --// Refrain yen from going out of ur account when 
 
 --// ROLL SETTINGS //--
 getgenv().skipAnimation = true --// Highly recommended to keep it on
-getgenv().rollType = "Height" --// Choices: "Trait", "Weapon" or "Height"
-getgenv().toRoll = {"5'8"} --// What you want to roll
+getgenv().rollType = "Face" --// Choices: "Trait", "Weapon" or "Height"
+getgenv().toRoll = {"Nagi"} --// What you want to roll
 
 --// TABLES //--
 local heights = {
@@ -132,11 +132,20 @@ local function getPath(rolltype)
     end
 end
 
+local function getFaceName(id)
+    if not id then return end
+    for i,v in ipairs(workspace.Heads:GetChildren()) do
+        if v:FindFirstChildOfClass("Decal").Texture == id then
+            return v.Name
+        end
+    end
+end
+
 
 local oldweapon;
 local oldtrait;
 local function autoRoll()
-    if getgenv().skipAnimation == true then
+    if getgenv().skipAnimation == true and getgenv().rollType == "Weapon" or getgenv().rollType == "Trait" then
         local func = getTraitAnim()
         local sfunc = getWeaponAnim()
         if func == nil or sfunc == nil then 
@@ -174,10 +183,14 @@ local function autoRoll()
                 end
             end)
         elseif getgenv().rollType == "Height" then
-            print(pathtovalues, pathtovalues.Parent)            
             a = pathtovalues:GetPropertyChangedSignal("Value"):Connect(function()
                 currentRoll = pathtovalues.Value
                 print(heights[currentRoll], currentRoll)
+            end)
+        elseif getgenv().rollType == "Face" then
+            a = pathtovalues:GetPropertyChangedSignal("Texture"):Connect(function()
+                currentRoll = getFaceName(pathtovalues.Texture)
+                print(currentRoll)
             end)
         end
 
@@ -198,6 +211,13 @@ local function autoRoll()
                 local translatedtoroll = translateHeight(getgenv().toRoll)
                 if translatedtoroll == currentRoll then
                     print("✅ - Successfully rolled; "..heights[currentRoll])
+                    print("If you don't see the roll in the menu, just rejoin the game 🔄")
+                    a:Disconnect()
+                    break
+                end
+            elseif getgenv().rollType == "Face" then
+                if table.find(getgenv().toRoll, currentRoll) then
+                    print("✅ - Successfully rolled; "..currentRoll)
                     print("If you don't see the roll in the menu, just rejoin the game 🔄")
                     a:Disconnect()
                     break
