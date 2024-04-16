@@ -3,8 +3,8 @@ getgenv().noYenChange = true --// Refrain yen from going out of ur account when 
 
 --// ROLL SETTINGS //--
 getgenv().skipAnimation = true --// Highly recommended to keep it on
-getgenv().rollType = "Weapon" --// Choices: "Trait" or "Weapon"
-getgenv().toRoll = {"Shadow"} --// What you want to roll
+getgenv().rollType = "Height" --// Choices: "Trait", "Weapon" or "Height"
+getgenv().toRoll = {"5'8"} --// What you want to roll
 
 --// TABLES //--
 local heights = {
@@ -77,6 +77,23 @@ local function getWeaponAnim()
     end
 end
 
+local function translateHeight(height)
+    if getgenv().rollType == "Height" then
+        if string.find(getgenv().toRoll[1], "'") then
+            if getgenv().toRoll[1] == "6'0" then return 10 end
+            for i,v in pairs(heights) do
+                if v == getgenv().toRoll[1] then
+                    return i
+                end
+            end
+        elseif getgenv().toRoll == "6" then
+            return 10 --// 10 == 6 foot
+        elseif tonumber(getgenv().toRoll[1]) >= 1 and tonumber(getgenv().toRoll[1]) <= 12 then
+            return tonumber(getgenv().toRoll)
+        end
+    end
+end
+
 local function getRemote(rolltype)
     local gamefolder = game:GetService("ReplicatedStorage"):FindFirstChild("rerolls")
     if rolltype == "Trait" then
@@ -142,13 +159,13 @@ local function autoRoll()
 
     local currentRoll = nil
     local pathtovalues = getPath(getgenv().rollType)
+    print(pathtovalues, pathtovalues.Parent)            
     if pathtovalues == nil then return end
 
     
     local a;
     local changefunction = getChangeWeaponFunc()
-    task.spawn(function()
-        if getgenv().rollType == "Trait" or "Weapon" then
+        if getgenv().rollType == "Trait" or getgenv().rollType == "Weapon" then
             a = pathtovalues.ChildAdded:Connect(function(inst)
                 currentRoll = inst.Name
                 print(currentRoll)
@@ -157,24 +174,34 @@ local function autoRoll()
                 end
             end)
         elseif getgenv().rollType == "Height" then
+            print(pathtovalues, pathtovalues.Parent)            
             a = pathtovalues:GetPropertyChangedSignal("Value"):Connect(function()
                 currentRoll = pathtovalues.Value
                 print(heights[currentRoll], currentRoll)
             end)
         end
-    end)
 
 
     local pathtoremote = getRemote(getgenv().rollType)
     task.spawn(function()
         while task.wait(0.3) do  
-            if table.find(getgenv().toRoll, currentRoll) then
-                print("✅ - Successfully rolled; "..currentRoll)
-                print("If you don't see the roll in the menu, just rejoin the game 🔄")
-                a:Disconnect()
-                restorefunction(oldtrait)
-                restorefunction(oldweapon) 
-                break
+            if getgenv().rollType == "Trait" or getgenv().rollType == "Weapon" then
+                if table.find(getgenv().toRoll, currentRoll) then
+                    print("✅ - Successfully rolled; "..currentRoll)
+                    print("If you don't see the roll in the menu, just rejoin the game 🔄")
+                    a:Disconnect()
+                    restorefunction(oldtrait)
+                    restorefunction(oldweapon) 
+                    break
+                end
+            elseif getgenv().rollType == "Height" then
+                local translatedtoroll = translateHeight(getgenv().toRoll)
+                if translatedtoroll == currentRoll then
+                    print("✅ - Successfully rolled; "..heights[currentRoll])
+                    print("If you don't see the roll in the menu, just rejoin the game 🔄")
+                    a:Disconnect()
+                    break
+                end
             end
             pathtoremote:FireServer()
         end
@@ -182,17 +209,6 @@ local function autoRoll()
 end
 
 --// Initialization //--
-if getgenv().rollType == "Height" then
-    if string.find(getgenv().toRoll, "'") then
-        for i,v in pairs(heights) do
-            if v == getgenv().toRoll then
-                getgenv().toRoll = i
-            end
-        end
-    elseif getgenv().toRoll == "6" then
-        getgenv().toRoll = 10 --// 10 == 6 foot
-    end
-end
 
 for i = 1, 3 do
     print("⏳ Starting in..".. i)
