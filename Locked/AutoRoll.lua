@@ -3,8 +3,10 @@ getgenv().noYenChange = true --// Refrain yen from going out of ur account when 
 
 --// ROLL SETTINGS //--
 getgenv().skipAnimation = true --// Highly recommended to keep it on
-getgenv().rollType = "Face" --// Choices: "Trait", "Weapon" or "Height"
-getgenv().toRoll = {"Nagi"} --// What you want to roll
+getgenv().rollType = "Weapon" --// Choices: "Trait", "Weapon" or "Height"
+getgenv().toRoll = {"Neurotic"} --// What you want to roll
+
+getgenv().buffType = "Hitbox" --// For rolling hitbox
 
 --// TABLES //--
 local heights = {
@@ -141,6 +143,25 @@ local function getFaceName(id)
     end
 end
 
+local function formattedBuff(buff)
+    if not buff then return end
+    local value = buff:GetAttribute("BuffValue") * 10 -- 1.345 -> 13.45
+
+    local preformatted = string.format("%.1f", value)
+    local bufftype = buff.Value
+    local formatted = tostring(preformatted.. "% " .. bufftype)
+
+    return formatted
+end
+
+local function getBuffInfo(buff)
+    if not buff then return end
+    local value = buff:GetAttribute("BuffValue") * 10
+    local bufftype = tostring(buff.Value)
+
+    return tonumber(value), bufftype
+end
+
 
 local oldweapon;
 local oldtrait;
@@ -149,17 +170,16 @@ local function autoRoll()
         local func = getTraitAnim()
         local sfunc = getWeaponAnim()
         if func == nil or sfunc == nil then 
-            warn("⚠️ Functions fetched are nil! Consider rejoining the game ⚠️")
-            print("⛔ Stopping script")
-            return
+            warn("⚠️ Game functions already hooked, continuing...⚠️")
+        else
+            oldtrait = hookfunction(func, function(self, ...)
+                return nil
+            end)
+    
+            oldweapon = hookfunction(sfunc, function(self, ...)
+                return nil
+            end)
         end
-        oldtrait = hookfunction(func, function(self, ...)
-            return nil
-        end)
-
-        oldweapon = hookfunction(sfunc, function(self, ...)
-            return nil
-        end)
     end
 
     if getgenv().IS_YEN_HOOKED == false then
@@ -173,12 +193,13 @@ local function autoRoll()
 
     
     local a;
-    local changefunction = getChangeWeaponFunc()
+    local changefunction = clonefunction(getChangeWeaponFunc())
         if getgenv().rollType == "Trait" or getgenv().rollType == "Weapon" then
             a = pathtovalues.ChildAdded:Connect(function(inst)
                 currentRoll = inst.Name
                 print(currentRoll)
                 if getgenv().rollType == "Weapon" then
+                    print("changefunction")
                     changefunction(inst)
                 end
             end)
@@ -192,10 +213,16 @@ local function autoRoll()
                 currentRoll = getFaceName(pathtovalues.Texture)
                 print(currentRoll)
             end)
+        elseif getgenv().rollType == "Buff" then
+            a = pathtovalues.AttributeChanged:Connect(function()
+                currentRoll = formattedBuff(pathtovalues)
+                print(currentRoll)
+            end)
         end
 
 
     local pathtoremote = getRemote(getgenv().rollType)
+    pathtoremote:FireServer()
     task.spawn(function()
         while task.wait(0.3) do  
             if getgenv().rollType == "Trait" or getgenv().rollType == "Weapon" then
@@ -203,8 +230,6 @@ local function autoRoll()
                     print("✅ - Successfully rolled; "..currentRoll)
                     print("If you don't see the roll in the menu, just rejoin the game 🔄")
                     a:Disconnect()
-                    restorefunction(oldtrait)
-                    restorefunction(oldweapon) 
                     break
                 end
             elseif getgenv().rollType == "Height" then
@@ -217,6 +242,14 @@ local function autoRoll()
                 end
             elseif getgenv().rollType == "Face" then
                 if table.find(getgenv().toRoll, currentRoll) then
+                    print("✅ - Successfully rolled; "..currentRoll)
+                    print("If you don't see the roll in the menu, just rejoin the game 🔄")
+                    a:Disconnect()
+                    break
+                end
+            elseif getgenv().rollType == "Buff" then
+                local buffValue, buffType = getBuffInfo(pathtovalues)
+                if buffValue >= tonumber(getgenv().toRoll[1]) and buffType == string.lower(getgenv().buffType) then
                     print("✅ - Successfully rolled; "..currentRoll)
                     print("If you don't see the roll in the menu, just rejoin the game 🔄")
                     a:Disconnect()
