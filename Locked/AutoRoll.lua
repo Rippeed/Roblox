@@ -193,13 +193,15 @@ local function autoRoll()
 
     
     local a;
-    local changefunction = clonefunction(getChangeWeaponFunc())
+    local changefunction
+    if getgenv().rollType == "Weapon" then
+        changefunction = clonefunction(getChangeWeaponFunc())
+    end
         if getgenv().rollType == "Trait" or getgenv().rollType == "Weapon" then
             a = pathtovalues.ChildAdded:Connect(function(inst)
                 currentRoll = inst.Name
                 print(currentRoll)
                 if getgenv().rollType == "Weapon" then
-                    print("changefunction")
                     changefunction(inst)
                 end
             end)
