@@ -8,6 +8,14 @@ getgenv().toRoll = "" --// What you want to roll
 
 getgenv().buffType = "Hitbox" --// For rolling hitbox
 
+
+--// Settings table //--
+local Settings = {
+    antiRagdoll = false,
+}
+
+local IS_ROLLING = false
+
 --// TABLES //--
 local heights = {
     [1] = "5'3",
@@ -46,7 +54,8 @@ local weapons = {
     "Shadow",
     "Snatch",
     "Voracious",
-    "Web"
+    "Web",
+    "GodSpeed"
 }
 
 local traits = {
@@ -319,6 +328,7 @@ local function autoRoll()
                 if getgenv().toRoll == currentRoll then
                     print("✅ - Successfully rolled; "..currentRoll)
                     print("If you don't see the roll in the menu, just rejoin the game 🔄")
+                    IS_ROLLING = false
                     pass_notification("✅ Rolled; "..currentRoll, "If you don't see the roll in the menu, just rejoin the game 🔄")
                     a:Disconnect()
                     break
@@ -328,6 +338,7 @@ local function autoRoll()
                 if translatedtoroll == currentRoll then
                     print("✅ Rolled; "..heights[currentRoll])
                     print("If you don't see the roll in the menu, just rejoin the game 🔄")
+                    IS_ROLLING = false
                     pass_notification("✅ Rolled; "..heights[currentRoll], "If you don't see the roll in the menu, just rejoin the game 🔄")
                     a:Disconnect()
                     break
@@ -336,6 +347,7 @@ local function autoRoll()
                 if getgenv().toRoll == currentRoll then
                     print("✅ Rolled; "..currentRoll)
                     print("If you don't see the roll in the menu, just rejoin the game 🔄")
+                    IS_ROLLING = false
                     pass_notification("✅ Rolled; "..currentRoll, "If you don't see the roll in the menu, just rejoin the game 🔄")
                     a:Disconnect()
                     break
@@ -345,6 +357,7 @@ local function autoRoll()
                 if buffValue >= tonumber(getgenv().toRoll) and buffType == string.lower(getgenv().buffType) then
                     print("✅ Rolled; "..currentRoll)
                     print("If you don't see the roll in the menu, just rejoin the game 🔄")
+                    IS_ROLLING = false
                     pass_notification("✅ Rolled; "..currentRoll, "If you don't see the roll in the menu, just rejoin the game 🔄")
                     a:Disconnect()
                     break
@@ -353,6 +366,17 @@ local function autoRoll()
             pathtoremote:FireServer()
         end
     end)
+end
+
+local function infinite_Stamina(number) --// You can also hook the value instead
+    local plr = game.Players.LocalPlayer
+    local stamina = plr.PlayerGui.GeneralGUI.CurrentStamina.STAM
+    stamina:SetAttribute("MaxSTAM", number)
+    stamina.Value = number
+end
+
+local function disableJumpFatigue(bool)
+    game.Players.LocalPlayer.Character.Movement.JumpFatigue.Disabled = bool
 end
 
 --// UI //--
@@ -370,6 +394,36 @@ local Main = UI:CreatePage("Main")
 local Lobby = UI:CreatePage("Lobby")
 
 --// Main //-- 
+local movementSection = Main:CreateSection("Movement Settings")
+
+--// movementSection //--
+local infiniteStamineToggle = movementSection:CreateToggle({
+    Name = "Toggle Infinite Stamina",
+    Flag = "infiniteStaminaToggle",
+    Callback = function(bool)
+        if bool == true then
+            infinite_Stamina(9999999)
+        elseif bool == false then
+            infinite_Stamina(100)
+        end
+    end,
+})
+
+local jumpFatigueToggle = movementSection:CreateToggle({
+    Name = "Toggle Jump Fatigue",
+    Flag = "jumpFatigueToggle",
+    Callback = function(bool)
+        disableJumpFatigue(bool)
+    end,
+})
+
+local antiRagdollToggle = movementSection:CreateToggle({
+    Name = "Toggle Anti Ragdoll",
+    Flag = "antiRagdollToggle",
+    Callback = function(bool)
+        Settings.antiRagdoll = bool
+    end,
+})
 
 --// Lobby //--
 local autoRollSection = Lobby:CreateSection("Auto Roll Settings")
@@ -378,7 +432,10 @@ local autoRollSection = Lobby:CreateSection("Auto Roll Settings")
 autoRollSection:CreateButton({
 	Name = "Auto Roll";
 	Callback = function()
-		autoRoll()
+        if IS_ROLLING == true then return end
+        autoRoll()
+        IS_ROLLING = true
+
 	end
 })
 
@@ -452,3 +509,17 @@ function pass_notification(title, text)
 end
 
 UI:Toggle(true)
+
+
+local ragdollevent = game.ReplicatedStorage.Ragdoll
+local old;
+old = hookmetamethod(game, "__namecall", function(self, ...)
+    local method = getnamecallmethod()
+    local args = {...}
+
+    if self == ragdollevent and method == "FireServer" and Settings.antiRagdoll == true then
+        return nil
+    end
+
+    return old(self, unpack(args))
+end)
