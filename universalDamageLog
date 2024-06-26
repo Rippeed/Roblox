@@ -63,7 +63,6 @@ local NotificationIn = function(label: TextLabel)
 	local tween = ts:Create(label, ti, goal)
 	tween:Play()
 	tween.Completed:Wait()
-	print("completed")
 	label.Name = "TextLabel"
 end
 
@@ -118,7 +117,6 @@ local ShiftNotificationsUp = function()
 
 	for i, v in pairs(currentNotifications) do --// shift up
 		NotificationUp(v)
-        print("shifting up")
 	end
 
 end
@@ -144,6 +142,18 @@ function library:NewNotification(name: string, part: string, damage: string | nu
 		task.wait(3.5)
 		NotificationOut(newframe)
 	end)
+end
+
+function library:SetPosition(position: UDim2 | string)
+    if typeof(position) == "UDim2" then
+        container.Position = position
+    elseif type(position) == "string" then
+        if position == "LeftCorner" then
+            container.Position = UDim2.new(0.05, 0, 0.7, 0)
+        elseif position == "Center" then
+            container.Position = UDim2.new(container.Position.X.Scale, 0, 0.5, 0)
+        end
+    end
 end
 
 return library
