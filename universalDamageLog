@@ -118,6 +118,7 @@ local ShiftNotificationsUp = function()
 
 	for i, v in pairs(currentNotifications) do --// shift up
 		NotificationUp(v)
+        print("shifting up")
 	end
 
 end
