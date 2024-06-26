@@ -118,7 +118,26 @@ local ShiftNotificationsUp = function()
 	for i, v in pairs(currentNotifications) do --// shift up
 		NotificationUp(v)
 	end
+end
 
+function library:ClearNotifications()
+    local currentNotifications = {}
+
+	for i,v in pairs(container:GetChildren()) do
+		if v.ClassName == template.ClassName and v.Name ~= "Removing" and v.Name ~= "Inning" then --// check if alr being removed and if is textlabel
+			table.insert(currentNotifications, v)
+		end
+	end
+
+	table.sort(currentNotifications, function(a, b)
+		return a.AbsolutePosition.Y < b.AbsolutePosition.Y
+	end)
+
+    for i = 1, #currentNotifications do
+
+        local toRemoveNotification = currentNotifications[i]
+        NotificationOut(toRemoveNotification)
+    end
 end
 
 function library:NewNotification(name: string, part: string, damage: string | number)
@@ -145,6 +164,7 @@ function library:NewNotification(name: string, part: string, damage: string | nu
 end
 
 function library:SetPosition(position: UDim2 | string)
+    library:ClearNotifications()
     if typeof(position) == "UDim2" then
         container.Position = position
     elseif type(position) == "string" then
