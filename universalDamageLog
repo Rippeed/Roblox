@@ -1,7 +1,7 @@
 local NotificationUI = {};
 local library = {}
 library.__index = library;
-local Positioning = "LeftCorner" --// Center, LeftCorner
+local Positioning = "Center" --// Center, LeftCorner
 
 do --// init ui
     NotificationUI["1"] = Instance.new("ScreenGui", game:GetService("CoreGui"));
@@ -31,6 +31,8 @@ do --// init ui
     NotificationUI["4"]["Text"] = [[Hit <font color="#50C878">{Name}</font> in the <font color="#50C878">{Part}</font> for <font color="#50C878">{Dmg}</font> dmg]];
     NotificationUI["4"]["Position"] = UDim2.new(0.5, 0, 1, 0);
 end
+
+local defaultPos = NotificationUI["2"].Position
 
 do --// Position fixing & customization
     if Positioning == "Center" then
@@ -171,7 +173,7 @@ function library:SetPosition(position: UDim2 | string)
         if position == "LeftCorner" then
             container.Position = UDim2.new(0.05, 0, 0.7, 0)
         elseif position == "Center" then
-            container.Position = UDim2.new(container.Position.X.Scale, 0, 0.5, 0)
+            container.Position = UDim2.new(defaultPos.X.Scale, 0, 0.5, 0)
         end
     end
 end
