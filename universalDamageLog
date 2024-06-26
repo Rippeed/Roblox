@@ -1,0 +1,148 @@
+local NotificationUI = {};
+local library = {}
+library.__index = library;
+local Positioning = "LeftCorner" --// Center, LeftCorner
+
+do --// init ui
+    NotificationUI["1"] = Instance.new("ScreenGui", game:GetService("CoreGui"));
+    NotificationUI["1"]["ZIndexBehavior"] = Enum.ZIndexBehavior.Sibling;
+
+    NotificationUI["2"] = Instance.new("Frame", NotificationUI["1"]);
+    NotificationUI["2"]["BorderSizePixel"] = 0;
+    NotificationUI["2"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+    NotificationUI["2"]["Size"] = UDim2.new(0.37154, 0, 0.29725, 0);
+    NotificationUI["2"]["Position"] = UDim2.new(0.31396, 0, 0.5253, 0);
+    NotificationUI["2"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+    NotificationUI["2"]["Name"] = [[NotificationHolder]];
+    NotificationUI["2"]["BackgroundTransparency"] = 1;
+
+    NotificationUI["4"] = Instance.new("TextLabel", NotificationUI["1"]);
+    NotificationUI["4"]["TextStrokeTransparency"] = 0;
+    NotificationUI["4"]["BorderSizePixel"] = 0;
+    NotificationUI["4"]["TextTransparency"] = 1;
+    NotificationUI["4"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+    NotificationUI["4"]["TextSize"] = 18;
+    NotificationUI["4"]["FontFace"] = Font.new([[rbxasset://fonts/families/RobotoMono.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+    NotificationUI["4"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+    NotificationUI["4"]["BackgroundTransparency"] = 1;
+    NotificationUI["4"]["RichText"] = true;
+    NotificationUI["4"]["Size"] = UDim2.new(0.45927, 0, 0.125, 0);
+    NotificationUI["4"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+    NotificationUI["4"]["Text"] = [[Hit <font color="#50C878">{Name}</font> in the <font color="#50C878">{Part}</font> for <font color="#50C878">{Dmg}</font> dmg]];
+    NotificationUI["4"]["Position"] = UDim2.new(0.5, 0, 1, 0);
+end
+
+do --// Position fixing & customization
+    if Positioning == "Center" then
+        local container = NotificationUI["2"]
+        container.Position = UDim2.new(container.Position.X.Scale, 0, 0.5, 0)
+    elseif Positioning == "LeftCorner" then
+        local container = NotificationUI["2"]
+        container.Position = UDim2.new(0.05, 0, 0.7, 0)
+    else
+        local container = NotificationUI["2"]
+        container.Position = UDim2.new(container.Position.X.Scale, 0, 0.5, 0)
+    end
+end
+
+local ts = game:GetService("TweenService")
+local ti = TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+
+local template = NotificationUI["4"]
+
+local container = NotificationUI["2"]
+
+
+local NotificationIn = function(label: TextLabel)
+	label.Name = "Inning"
+	local goal = {
+		Position = UDim2.fromScale(container.Position.X.Scale, container.Position.Y.Scale),
+		TextTransparency = 0
+	}
+
+	local tween = ts:Create(label, ti, goal)
+	tween:Play()
+	tween.Completed:Wait()
+	print("completed")
+	label.Name = "TextLabel"
+end
+
+local NotificationUp = function(label: TextLabel)
+	local goal = {
+		Position = UDim2.new(label.Position.X.Scale, 0, label.Position.Y.Scale - 0.0799, 0);
+	}
+
+	local tween = ts:Create(label, ti, goal)
+	tween:Play()
+end
+
+local NotificationOut = function(label: TextLabel)
+	label.Name = "Removing"
+
+	local goal = {
+		Position = UDim2.new(label.Position.X.Scale + 0.5, 0, label.Position.Y.Scale, 0);
+		TextTransparency = 1;
+	}
+
+	local tween = ts:Create(label, ti, goal)
+	tween:Play()
+
+	tween.Completed:Wait()
+
+	label:Destroy()
+
+end
+
+local ShiftNotificationsUp = function()
+
+	local currentNotifications = {}
+
+	for i,v in pairs(container:GetChildren()) do
+		if v.ClassName == template.ClassName and v.Name ~= "Removing" and v.Name ~= "Inning" then --// check if alr being removed and if is textlabel
+			table.insert(currentNotifications, v)
+		end
+	end
+
+	table.sort(currentNotifications, function(a, b)
+		return a.AbsolutePosition.Y < b.AbsolutePosition.Y
+	end)
+
+	if #currentNotifications >= 4 then --// If theres alr max notifications --> free out space
+
+		for i = 1, #currentNotifications - 4 + 1 do
+
+			local toRemoveNotification = currentNotifications[i]
+			NotificationOut(toRemoveNotification)
+		end
+	end
+
+	for i, v in pairs(currentNotifications) do --// shift up
+		NotificationUp(v)
+	end
+
+end
+
+function library:NewNotification(name: string, part: string, damage: string | number)
+	ShiftNotificationsUp()
+
+	local name = name or "{Name}"
+	local part = part or "{Part}"
+	local dmg = tostring(damage) or "{Damage}"
+
+	local newframe = template:Clone()
+	--
+	newframe.Text = [[ Hit <font color="#50C878">{Name}</font> in the <font color="#50C878">{Part}</font> for <font color="#50C878">{Dmg}</font> dmg ]]
+	newframe.Text = newframe.Text:gsub("{Name}", name):gsub("{Part}", part):gsub("{Dmg}", dmg)
+	newframe.Position = UDim2.fromScale(container.Position.X.Scale, 1.25)
+
+	newframe.Parent = container
+
+	task.spawn(NotificationIn, newframe)
+
+	task.spawn(function()
+		task.wait(3.5)
+		NotificationOut(newframe)
+	end)
+end
+
+return library
