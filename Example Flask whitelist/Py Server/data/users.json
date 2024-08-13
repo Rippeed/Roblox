@@ -1,0 +1,14 @@
+{
+    "1": {
+        "user": "admin",
+        "key": "admin",
+        "hwid": "",
+        "claimed": false
+    },
+    "2": {
+        "user": "baconboy13044",
+        "key": "ilovelife",
+        "hwid": "asdasd",
+        "claimed": true
+    }
+}
